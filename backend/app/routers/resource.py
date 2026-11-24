@@ -92,7 +92,15 @@ def create_entry(module: str, payload: EntryPayload) -> ActionResult:
 
 
 @router.post("/{module}/{entry_id}/actions", response_model=ActionResult)
-def run_action(module: str, entry_id: int, payload: ActionPayload) -> ActionResult:
+def run_action(
+    module: str,
+    entry_id: int,
+    payload: ActionPayload,
+    request: Request,
+) -> ActionResult:
     service = require_service(module)
-    entry, message = service.run_action(entry_id, payload.action.strip())
+    # 查询参数也作为可选参数传入（例如 ?boundary=current），与 body 合并。
+    options = {k: v for k, v in request.query_params.items()}
+    entry, message = service.run_action(
+        entry_id, payload.action.strip(), payload, options)
     return ActionResult(ok=entry is not None, message=message, entry=entry)

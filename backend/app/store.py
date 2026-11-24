@@ -11,12 +11,18 @@ from app.seed import SEED_ROWS
 
 class Store:
     def __init__(self) -> None:
-        self._tables: dict[str, list[dict[str, Any]]] = {
+        self._tables: dict[str, list[dict[str, Any]]] = {}
+        self.reset()
+
+    def reset(self) -> None:
+        """恢复到种子数据（测试/重复演练时使用），同时清空运行期新表。"""
+        self._tables = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
 
     def module_names(self) -> list[str]:
-        return sorted(self._tables)
+        # 下划线前缀的表是运行期内部状态（如文件目录），不计入业务模块。
+        return sorted(name for name in self._tables if not name.startswith("_"))
 
     def rows(self, module: str) -> list[dict[str, Any]]:
         return self._tables.setdefault(module, [])

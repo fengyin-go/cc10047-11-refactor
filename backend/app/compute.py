@@ -7,6 +7,31 @@ import hashlib
 import math
 from typing import Any
 
+# 统一文件大小换算（分区合并/压缩共用同一口径），从计算引擎层也可导入。
+from app.file_size import (  # noqa: F401
+    BYTES_PER_MIB,
+    DEFAULT_TARGET_FILE_SIZE_BYTES,
+    FileSize,
+    bytes_to_mb,
+    bytes_to_mib,
+    file_size as unified_file_size,
+    mb_to_bytes,
+    mib_to_bytes,
+    normalize_file_size,
+    sum_file_sizes,
+)
+
+
+# ------------------------------------------------------------------
+# unified_file_size_calculator
+# ------------------------------------------------------------------
+
+def unified_size_calculator(size_mib: Any = None, size_bytes: Any = None,
+                            **aliases: Any) -> dict[str, Any]:
+    """统一文件大小计算入口：返回 MiB 与字节一致的标准化结果。"""
+    from app.file_size import file_size
+    return file_size(size_mib=size_mib, size_bytes=size_bytes, **aliases)
+
 
 # ------------------------------------------------------------------
 # partition_calculator
@@ -71,6 +96,7 @@ def compaction_planner(
             "files_per_batch": 0,
             "parallelism": 0,
             "target_file_size_bytes": target_file_size,
+            "target_file_size": target_file_size,
             "estimated_duration_seconds": 0,
             "reason": "没有需要压缩的小文件",
         }
@@ -81,6 +107,7 @@ def compaction_planner(
         "files_per_batch": len(candidates) // batches if batches else 0,
         "parallelism": min(max_parallelism, len(candidates)),
         "target_file_size_bytes": target_file_size,
+        "target_file_size": target_file_size,
         "estimated_duration_seconds": len(candidates) * 15,
     }
     return {
